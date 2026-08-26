@@ -5,22 +5,22 @@ import com.johnymuffin.beta.evolutioncore.utils.BetaEvolutionsUtils;
 import com.johnymuffin.beta.evolutioncore.EvolutionCache;
 import com.johnymuffin.beta.evolutioncore.EvolutionCore;
 import com.johnymuffin.beta.evolutioncore.event.PlayerEvolutionAuthEvent;
-import com.projectposeidon.johnymuffin.ConnectionPause;
+import com.legacyminecraft.poseidon.event.player.AsyncPlayerPreLoginEvent;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
-import org.bukkit.event.player.PlayerListener;
-import org.bukkit.event.player.PlayerPreLoginEvent;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
+import org.bukkit.event.Listener;
 
-public class EvolutionPlayerListener extends PlayerListener {
+public class EvolutionPlayerListener implements Listener {
     private EvolutionCore plugin;
 
     public EvolutionPlayerListener(EvolutionCore plugin) {
         this.plugin = plugin;
     }
 
-    @Override
-    public void onPlayerPreLogin(PlayerPreLoginEvent event) {
-
+    @EventHandler(priority = EventPriority.HIGH)
+    public void onAsyncPlayerPreLogin(AsyncPlayerPreLoginEvent event) {
         final String username = event.getName();
         final String ipAddress = event.getAddress().getHostAddress();
         //Check if user is cached, if they are, skip the lookup
@@ -28,23 +28,13 @@ public class EvolutionPlayerListener extends PlayerListener {
             return;
         }
 
-        //Add Connection Pause
-        ConnectionPause connectionPause = event.addConnectionPause(plugin, "BetaEvolutions");
         //Check Entries Async
-        Bukkit.getServer().getScheduler().scheduleAsyncDelayedTask(plugin, () -> {
-            BetaEvolutionsUtils betaEvolutions = new BetaEvolutionsUtils(false);
-            final BetaEvolutionsUtils.VerificationResults verificationResults = betaEvolutions.verifyUser(username, ipAddress);
-
-            Bukkit.getServer().getScheduler().scheduleSyncDelayedTask(plugin, () -> {
-                plugin.logInfo(username + " has authenticated with " + verificationResults.getSuccessful() + "/" + verificationResults.getTotal() + " nodes.");
-                if (verificationResults.getSuccessful() > 0) {
-                    EvolutionCache.getInstance().addPlayerAuthentication(username, ipAddress);
-                }
-                event.removeConnectionPause(connectionPause);
-            });
-
-
-        });
+        BetaEvolutionsUtils betaEvolutions = new BetaEvolutionsUtils(false);
+        final BetaEvolutionsUtils.VerificationResults verificationResults = betaEvolutions.verifyUser(username, ipAddress);
+        plugin.logInfo(username + " has authenticated with " + verificationResults.getSuccessful() + "/" + verificationResults.getTotal() + " nodes.");
+        if (verificationResults.getSuccessful() > 0) {
+            EvolutionCache.getInstance().addPlayerAuthentication(username, ipAddress);
+        }
     }
 
     private void callAuthenticationEvent(Player p, Boolean authStatus, AuthReturnType art) {
