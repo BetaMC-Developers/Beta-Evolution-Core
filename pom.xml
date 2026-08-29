@@ -6,7 +6,7 @@
 
     <groupId>com.johnymuffin.beta</groupId>
     <artifactId>EvolutionCore</artifactId>
-    <version>1.4.0</version>
+    <version>1.4.1</version>
 
     <properties>
         <java.version>25</java.version>

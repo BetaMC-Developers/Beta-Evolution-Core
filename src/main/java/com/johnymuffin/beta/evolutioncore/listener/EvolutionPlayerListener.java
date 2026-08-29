@@ -11,6 +11,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
+import org.bukkit.event.player.PlayerJoinEvent;
 
 public class EvolutionPlayerListener implements Listener {
     private EvolutionCore plugin;
@@ -34,6 +35,20 @@ public class EvolutionPlayerListener implements Listener {
         plugin.logInfo(username + " has authenticated with " + verificationResults.getSuccessful() + "/" + verificationResults.getTotal() + " nodes.");
         if (verificationResults.getSuccessful() > 0) {
             EvolutionCache.getInstance().addPlayerAuthentication(username, ipAddress);
+        }
+    }
+
+    @EventHandler(priority = EventPriority.HIGHEST)
+    public void onPlayerJoin(PlayerJoinEvent event) {
+        final String playerName = event.getPlayer().getName();
+        final String ip = event.getPlayer().getAddress().getAddress().getHostAddress();
+
+        if (EvolutionCache.getInstance().isPlayerCached(playerName, ip)) {
+            //Player is known in the cache with ip
+            plugin.logInfo("Received Authentication Status From Cache for: " + playerName + " - User is verified");
+            callAuthenticationEvent(event.getPlayer(), true, AuthReturnType.successful);
+        } else {
+            callAuthenticationEvent(event.getPlayer(), false, AuthReturnType.successful);
         }
     }
 
